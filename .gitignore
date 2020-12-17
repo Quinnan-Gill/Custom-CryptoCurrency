@@ -1,0 +1,5 @@
+.vscode
+build
+.bash_history
+.DS_STORE
+run.sh
