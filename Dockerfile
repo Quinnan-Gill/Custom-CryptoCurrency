@@ -3,14 +3,11 @@ FROM ubuntu:latest
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get -y install \
-    gcc \
-    g++ \
-    cmake \
-    make \
-    git \
-    m4 \
-    wget \
-    lzip
+    gcc g++ cmake make \
+    git m4 wget lzip \
+    autoconf automake libtool curl \
+    unzip
+
 
 # Install Cypto++
 RUN git clone https://github.com/weidai11/cryptopp.git
@@ -26,5 +23,12 @@ RUN cd leveldb/build/ && \
     cmake -DCMAKE_BUILD_TYPE=Release .. && \
     cmake --build . && \
     make install
+
+RUN git clone https://github.com/protocolbuffers/protobuf.git
+RUN cd protobuf/ && \
+    git submodule update --init --recursive && \
+    ./autogen.sh && \
+    ./configure && make && \
+    make install && ldconfig
 
 WORKDIR /home

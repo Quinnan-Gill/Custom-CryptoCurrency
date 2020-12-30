@@ -1,46 +1,24 @@
 #ifndef CRYPTO_BLOCKCHAIN_HPP
 #define CRYPTO_BLOCKCHAIN_HPP
 
-#include <chrono>
-#include <ctime>
 #include <string>
-#include <vector>
+#include <iostream>
 
-#include "cryptopp/cryptlib.h"
-#include "cryptopp/sha.h"
-
-using namespace CryptoPP;
-
-class Block {
-public:
-    Block (std::string data, std::string prevBlockHash);
-
-    // Block() {}
-    void        setHash();
-    std::string getPrevBlockHash();
-    std::string getData();
-    std::string getHash();
-
-    // Instance Variables
-    time_t      timestamp;
-    std::string data;
-    std::string prevBlockHash;
-    std::string hash;
-    int     nonce;
-};
+#include "cryptodb.hpp"
+#include "block.hpp"
 
 class BlockChain {
 public:
     // NewBlockchain
     BlockChain ();
+    ~BlockChain();
 
-    void addBlock(std::string data);
+    void addBlock(std::string& data);
     Block newGenesisBlock();
 
     // Instance Variables
-    std::vector<Block> blocks;
+    std::string tip; // The hash of the last block
+    CryptoDB* db;
 };
-
-std::string getHex(const std::string& input);
 
 #endif
