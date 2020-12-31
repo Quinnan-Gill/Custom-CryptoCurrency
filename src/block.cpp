@@ -54,8 +54,8 @@ std::string Block::getHash() {
     return getHex(hash);
 }
 
-std::string serialize(Block* b) {
-    crypto::Block s_block;
+std::string BlockSerialize::serialize(Block* b) {
+    CryptoProtobuf::Block s_block;
     std::string serialBlockString;
 
     s_block.set_timestamp(b->timestamp);
@@ -71,9 +71,11 @@ std::string serialize(Block* b) {
     return serialBlockString;
 }
 
-Block deserialize(std::string& serialBlockString) {
-    crypto::Block d_block;
-    d_block.ParseFromString(serialBlockString);
+Block BlockSerialize::deserialize(std::string& serialBlockString) {
+    CryptoProtobuf::Block d_block;
+    if(!d_block.ParseFromString(serialBlockString)) {
+        throw "Unable to Deserialize Block";
+    }
 
     Block b{
         d_block.timestamp(),

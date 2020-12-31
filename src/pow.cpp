@@ -44,9 +44,6 @@ int ProofOfWork::run(std::string& final_hash) {
 
     block->hash = hash;
 
-    // printf("\n\nHash %s\n", getHex(hash).c_str());
-    // printf("---Final----- %s\n", getHex(prepareData(nonce)).c_str());
-
     return nonce;
 }
 
@@ -56,8 +53,6 @@ bool ProofOfWork::validate() {
     std::string hash;
 
     data = prepareData(block->nonce);
-
-    // printf("New: %s\n", getHex(data).c_str());
 
     SHA256 sha256Hash;
     sha256Hash.Update((const byte*)data.data(), data.size());

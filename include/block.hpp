@@ -43,7 +43,10 @@ public:
 
 // Utility functions
 std::string getHex(const std::string& input);
-std::string serialize(Block* b);
-Block deserialize(std::string& serialBlockString);
+
+namespace BlockSerialize {
+    std::string serialize(Block* b);
+    Block deserialize(std::string& serialBlockString);
+}
 
 #endif

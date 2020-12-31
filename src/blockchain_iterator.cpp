@@ -16,7 +16,7 @@ Block BlockchainIterator::nextBlock() {
         &encodedBlock
     );
     
-    Block currentBlock = deserialize(encodedBlock);
+    Block currentBlock = BlockSerialize::deserialize(encodedBlock);
 
     currentHash = currentBlock.prevBlockHash;
 

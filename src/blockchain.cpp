@@ -21,7 +21,7 @@ BlockChain::BlockChain() {
         s = blockBucket->Put(
             leveldb::WriteOptions(),
             genesis.hash,
-            serialize(&genesis)
+            BlockSerialize::serialize(&genesis)
         );
         checkStatus(s);
 
@@ -60,7 +60,7 @@ void BlockChain::addBlock(std::string& data) {
     s = blockBucket->Put(
         leveldb::WriteOptions(),
         newBlock.hash,
-        serialize(&newBlock)
+        BlockSerialize::serialize(&newBlock)
     );
     checkStatus(s);
 
