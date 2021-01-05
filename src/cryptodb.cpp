@@ -1,8 +1,9 @@
 #include "cryptodb.hpp"
 
-CryptoDB::CryptoDB() {
+CryptoDB::CryptoDB(bool create, bool error) {
     leveldb::Options options;
-    options.create_if_missing = true;
+    options.create_if_missing = create;
+    options.error_if_exists = error;
 
     dbPath = DB_DIR;
     createDirectory(dbPath.c_str());
@@ -16,29 +17,27 @@ CryptoDB::CryptoDB() {
         std::cerr << status.ToString() << std::endl;
         exit(1);
     }
-
-    status = leveldb::DB::Open(
-        options,
-        dbPath.append(CHAINSTATE_BUCKET).c_str(),
-        &chainstateBucket
-    );
-    if (!status.ok()) {
-        std::cerr << status.ToString() << std::endl;
-        exit(1);
-    }
+    // if (!status.ok() && error) {
+    //     std::cerr << "Block already exists." << std::endl;
+    //     exit(1);
+    // } else if (!status.ok() && !create) {
+    //     std::cerr << status.ToString() << std::endl;
+    //     std::cerr << "No existing blockchain found. Create one first." << std::endl;
+    //     exit(1);
+    // }
 }
 
 CryptoDB::~CryptoDB() {
     delete blockBucket;
-    delete chainstateBucket;
+    // delete chainstateBucket;
 }
 
 leveldb::DB* CryptoDB::getBucket(Bucket bucketOption) {
     switch(bucketOption) {
     case BLOCKS:
         return blockBucket;
-    case CHAINSTATE:
-        return chainstateBucket;
+    // case CHAINSTATE:
+    //     return chainstateBucket;
     default:
         return nullptr;
     }

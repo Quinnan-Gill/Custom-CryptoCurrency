@@ -18,14 +18,14 @@ enum Bucket {
 
 class CryptoDB {
 public:
-    CryptoDB();
+    CryptoDB(bool create, bool error);
 
     ~CryptoDB();
 
     leveldb::DB* getBucket(Bucket bucketOption);
 private:
     leveldb::DB* blockBucket = nullptr;
-    leveldb::DB* chainstateBucket = nullptr;
+    // leveldb::DB* chainstateBucket = nullptr;
     std::string dbPath;
 
     void createDirectory(const char* path);

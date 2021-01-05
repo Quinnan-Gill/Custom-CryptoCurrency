@@ -5,17 +5,26 @@
 #include "blockchain_iterator.hpp"
 #include "pow.hpp"
 
+#define SEND_ARGC 8
+
 class CLI {
 public:
-    CLI(BlockChain* bc);   
+    CLI();   
     void run(int argc, char *argv[]); 
 
 private:
-    BlockChain* bc;
-
     void usage(char *argv[]);
-    void addBlock(std::string& data);
+
+    void parseCreateBlockchain(char *argv[], std::string* address);
+    void createBlockchain(std::string address);
+
+    void parseGetBalance(char *argv[], std::string* address);
+    void getBalance(std::string address);
+
     void printChain();
+
+    int parseSend(char *argv[], std::string* from, std::string* to);
+    void send(std::string from, std::string to, int amount);
 };
 
 #endif

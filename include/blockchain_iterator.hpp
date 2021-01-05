@@ -7,6 +7,8 @@
 #include "block.hpp"
 #include "blockchain.hpp"
 
+class BlockChain;
+
 class BlockchainIterator {
 public:
     BlockchainIterator(BlockChain* bc);

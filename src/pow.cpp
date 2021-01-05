@@ -9,7 +9,7 @@ ProofOfWork::ProofOfWork(Block& pow_block) {
 std::string ProofOfWork::prepareData(int nonce) {
     std::string data;
     data.append(block->getPrevBlockHash());
-    data.append(block->data);
+    data.append(block->hashTransactions());
     data.append(intToHex(block->timestamp));
     data.append(intToHex(targetBits));
     data.append(intToHex((int64_t)nonce));
@@ -22,7 +22,7 @@ int ProofOfWork::run(std::string& final_hash) {
     int nonce = 0;
     std::string hash;
 
-    printf("Mining the block containing \"%s\"\n", (*block).data.c_str());
+    printf("Mining a new block\n");
     while (nonce < INT_MAX) {
         std::string data = prepareData(nonce);
         

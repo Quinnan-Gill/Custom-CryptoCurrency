@@ -21,6 +21,16 @@ void TXInput::loadTXInput(CryptoProtobuf::TXInput* s_txin) {
     s_txin->set_scriptsig(this->scriptSig);
 }
 
+bool TXInput::canUnlockOutputWith(std::string unlockingData) {
+    return scriptSig.compare(unlockingData) == 0;
+}
+
+void TXInput::printTXInput() {
+    printf("TXInput txid: %s\n", getHex(txid).c_str());
+    printf("TXInput vout: %d\n", vout);
+    printf("TXInput scriptSig: %s\n", scriptSig.c_str());
+}
+
 std::string TXInputSerialize::serialize(TXInput* txin) {
     CryptoProtobuf::TXInput s_txin;
     std::string serialTXInput;
@@ -62,6 +72,15 @@ TXOutput::TXOutput(CryptoProtobuf::TXOutput* d_txout) {
 void TXOutput::loadTXOutput(CryptoProtobuf::TXOutput* s_txout) {
     s_txout->set_value(this->value);
     s_txout->set_scriptpubkey(this->scriptPubKey);
+}
+
+bool TXOutput::canBeUnlockedWith(std::string unlockingData) {
+    return scriptPubKey.compare(unlockingData) == 0;
+}
+
+void TXOutput::printTXOutput() {
+    printf("TXOutput value: %d\n", value);
+    printf("TXOutput scriptPubKey: %s\n", scriptPubKey.c_str());
 }
 
 std::string TXOutputSerialize::serialize(TXOutput* txout) {
@@ -109,6 +128,42 @@ Transaction::Transaction(std::string to, std::string data) {
     setID();
 }
 
+#include "blockchain.hpp"
+
+Transaction::Transaction(std::string from, std::string to, int amount, BlockChain* bc) {
+    std::vector<TXInput> inputs;
+    std::vector<TXOutput> outputs;
+
+    std::map<std::string, std::vector<int>> validOutputs;
+    int acc = bc->findSpendableOutputs(from, amount, &validOutputs);
+
+    if (acc < amount) {
+        std::cerr << "ERROR: Not enough funds" << std::endl;
+        exit(1);
+    }
+
+    // Build a list of inputs
+    for(auto const& [txid, outs] : validOutputs) {
+        for(int out : outs) {
+            TXInput input{txid, out, from};
+            inputs.push_back(input);
+        }
+    }
+
+    // Build a list of outputs
+    TXOutput output{amount, to};
+    outputs.push_back(output);
+    if (acc > amount) {
+        TXOutput output{acc - amount, from}; //change
+        outputs.push_back(output);
+    }
+
+    this->vin  = inputs;
+    this->vout = outputs;
+
+    setID();
+}
+
 Transaction::Transaction(CryptoProtobuf::Transaction* d_trans) {
     this->id   = d_trans->id();
     for(int i=0; i < d_trans->vin_size(); i++) {
@@ -120,6 +175,16 @@ Transaction::Transaction(CryptoProtobuf::Transaction* d_trans) {
         CryptoProtobuf::TXOutput d_txout = d_trans->vout(i);
         TXOutput txout{&d_txout};
         vout.push_back(txout);
+    }
+}
+
+void Transaction::loadTransaction(CryptoProtobuf::Transaction* s_trans) {
+    s_trans->set_id(this->id);
+    for(TXInput txin : this->vin) {
+        txin.loadTXInput(s_trans->add_vin());
+    }
+    for(TXOutput txout : this->vout) {
+        txout.loadTXOutput(s_trans->add_vout());
     }
 }
 
@@ -135,17 +200,33 @@ void Transaction::setID() {
     this->id = hash;
 }
 
+bool Transaction::isCoinbase() {
+    return {
+        this->vin.size() == 1 &&
+        this->vin.at(0).txid.size() == 0 &&
+        this->vin.at(0).vout == -1
+    };
+}
+
+void Transaction::printTransaction() {
+    printf("Transaction id: %s\n", getHex(id).c_str());
+    printf("vin:\n");
+    for(int i=0; i < vin.size(); i++) {
+        printf("----------%d----------\n", i);
+        vin.at(i).printTXInput();
+    }
+    printf("vout:\n");
+    for(int i=0; i < vout.size(); i++) {
+        printf("----------%d----------\n", i);
+        vout.at(i).printTXOutput();
+    }
+}
+
 std::string TransactionSerialize::serialize(Transaction* transaction) {
     CryptoProtobuf::Transaction s_transaction;
     std::string serialTransaction;
 
-    s_transaction.set_id(transaction->id);
-    for(TXInput txin : transaction->vin) {
-        txin.loadTXInput(s_transaction.add_vin());
-    }
-    for(TXOutput txout : transaction->vout) {
-        txout.loadTXOutput(s_transaction.add_vout());
-    }
+    transaction->loadTransaction(&s_transaction);
 
     if(!s_transaction.SerializeToString(&serialTransaction)) {
         throw "Unable to Serialize Transaction";

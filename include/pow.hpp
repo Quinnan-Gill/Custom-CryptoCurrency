@@ -6,6 +6,8 @@
 
 #include "blockchain.hpp"
 
+#include "utils.hpp"
+
 #define HEXBITS 16
 #define MAX_NONCE 9223372036854775807
 

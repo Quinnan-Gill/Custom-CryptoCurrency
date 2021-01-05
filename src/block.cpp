@@ -3,11 +3,22 @@
 /*
  * The Block Code
  */
-Block::Block(std::string data, std::string prevBlockHash) {
+Block::Block(std::vector<Transaction> transactions, std::string prevBlockHash) {    
+    createBlock(transactions, prevBlockHash);
+}
+
+Block::Block(Transaction coinbase) {
+    std::vector<Transaction> coinbaseVec;
+    coinbaseVec.push_back(coinbase);
+    // Block(coinbaseVec, "");
+    createBlock(coinbaseVec, "");
+}
+
+void Block::createBlock(std::vector<Transaction> transactions, std::string prevBlockHash) {
     this->timestamp     = std::chrono::system_clock::to_time_t(
         std::chrono::system_clock::now()
     );
-    this->data          = data;
+    this->transactions  = transactions;
     this->prevBlockHash = prevBlockHash;
     
     // Determine the Hash
@@ -15,39 +26,46 @@ Block::Block(std::string data, std::string prevBlockHash) {
     this->nonce = pow.run(this->hash);
 }
 
-Block::Block(
-    time_t timestamp,
-    std::string data,
-    std::string prevBlockHash,
-    std::string hash,
-    int nonce
-) {
-    this->timestamp     = timestamp;
-    this->data          = data;
-    this->prevBlockHash = prevBlockHash;
-    this->hash          = hash;
-    this->nonce         = nonce;
+Block::Block(CryptoProtobuf::Block* d_block) {
+    this->timestamp = d_block->timestamp();
+    for(int i=0; i < d_block->transactions_size(); i++) {
+        CryptoProtobuf::Transaction d_tx = d_block->transactions(i);
+        Transaction tx{&d_tx};
+        transactions.push_back(tx);
+    }
+    this->prevBlockHash = d_block->prevblockhash();
+    this->hash          = d_block->hash();
+    this->nonce         = d_block->nonce();
 }
 
-void Block::setHash() {
-    std::string timestamp_str = std::ctime(&timestamp);
-    std::string headers;
-    headers.append(prevBlockHash);
-    headers.append(data);
-    headers.append(timestamp_str);
+void Block::loadBlock(CryptoProtobuf::Block* s_block) {
+    s_block->set_timestamp(this->timestamp);
+    for(Transaction tx : this->transactions) {
+        tx.loadTransaction(s_block->add_transactions());
+    }
+    s_block->set_prevblockhash(this->prevBlockHash);
+    s_block->set_hash(this->hash);
+    s_block->set_nonce(this->nonce);
+}
+
+std::string Block::hashTransactions() {
+    std::string txHashes;
+    std::string txHash;
+
+    for(Transaction tx : this->transactions) {
+        txHashes.append(tx.id);
+    }
 
     SHA256 sha256Hash;
-    sha256Hash.Update((const byte*)headers.data(), headers.size());
-    hash.resize(sha256Hash.DigestSize());
-    sha256Hash.Final((byte*)&hash[0]);
+    sha256Hash.Update((const byte*)txHashes.data(), txHashes.size());
+    txHash.resize(sha256Hash.DigestSize());
+    sha256Hash.Final((byte*)&txHash[0]);
+
+    return getHex(txHash);    
 }
 
 std::string Block::getPrevBlockHash() {
     return getHex(prevBlockHash);
-}
-
-std::string Block::getData() {
-    return getHex(data);
 }
 
 std::string Block::getHash() {
@@ -58,11 +76,12 @@ std::string BlockSerialize::serialize(Block* b) {
     CryptoProtobuf::Block s_block;
     std::string serialBlockString;
 
-    s_block.set_timestamp(b->timestamp);
-    s_block.set_data(b->data);
-    s_block.set_prevblockhash(b->prevBlockHash);
-    s_block.set_hash(b->hash);
-    s_block.set_nonce(b->nonce);
+    // s_block.set_timestamp(b->timestamp);
+    // s_block.set_data(b->data);
+    // s_block.set_prevblockhash(b->prevBlockHash);
+    // s_block.set_hash(b->hash);
+    // s_block.set_nonce(b->nonce);
+    b->loadBlock(&s_block);
 
     if (!s_block.SerializeToString(&serialBlockString)) {
         throw "Unable to Serialize Block";
@@ -77,28 +96,7 @@ Block BlockSerialize::deserialize(std::string& serialBlockString) {
         throw "Unable to Deserialize Block";
     }
 
-    Block b{
-        d_block.timestamp(),
-        d_block.data(),
-        d_block.prevblockhash(),
-        d_block.hash(),
-        d_block.nonce()
-    };
+    Block b{&d_block};
 
     return b;
-}
-
-std::string getHex(const std::string& input) {
-    // const char hex_digits[] = "0123456789ABCDEF";
-    const char hex_digits[] = "0123456789abcdef";
-
-    std::string output;
-    output.reserve(output.length() * 2);
-    for(unsigned char c : input) {
-
-        output.push_back(hex_digits[c >> 4]);
-        output.push_back(hex_digits[c & 15]);
-    }
-
-    return output;
 }
