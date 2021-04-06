@@ -24,15 +24,21 @@ const int subsidy = 10;
  */
 class TXInput {
 public:
+    // TXInput Constructors
     TXInput(std::string txid, int vout, std::string scriptSig);
+    // Serialize Helper Functions
     TXInput(CryptoProtobuf::TXInput* d_txin);
     void loadTXInput(CryptoProtobuf::TXInput* s_txin);
+    // Methods for TXInput class
     bool canUnlockOutputWith(std::string unlockingData);
+    bool usesKey(std::string pubKeyHash);
     void printTXInput();
 
+    // Instance Variables
     std::string txid;
     int         vout;
-    std::string scriptSig;
+    std::string signature;
+    std::string pubKey;
 };
 
 namespace TXInputSerialize {
@@ -46,13 +52,17 @@ namespace TXInputSerialize {
 class TXOutput {
 public:
     TXOutput(int value, std::string scriptPubKey);
+    // Serialize Helper Functions
     TXOutput(CryptoProtobuf::TXOutput* d_txout);
     void loadTXOutput(CryptoProtobuf::TXOutput* s_txout);
+    // Methods for TXOuput class
+    void lock(std::string address);
+    bool isLockedWithKey(std::string pubKeyHash);
     bool canBeUnlockedWith(std::string unlockingData);
     void printTXOutput();
 
     int         value;
-    std::string scriptPubKey;
+    std::string pubKeyHash;
 };
 
 namespace TXOutputSerialize {

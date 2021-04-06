@@ -3,32 +3,38 @@
 /*
  * TXInput
  */
-TXInput::TXInput(std::string txid, int vout, std::string scriptSig) {
+TXInput::TXInput(std::string txid, int vout, std::string pubKey) {
     this->txid      = txid;
     this->vout      = vout;
-    this->scriptSig = scriptSig;
+    this->pubKey    = pubKey;
 }
 
 TXInput::TXInput(CryptoProtobuf::TXInput* d_txin) {
     this->txid      = d_txin->txid();
     this->vout      = d_txin->vout();
-    this->scriptSig = d_txin->scriptsig();
+    this->pubKey    = d_txin->pubkey();
 }
 
 void TXInput::loadTXInput(CryptoProtobuf::TXInput* s_txin) {
     s_txin->set_txid(this->txid);
     s_txin->set_vout(this->vout);
-    s_txin->set_scriptsig(this->scriptSig);
+    s_txin->set_pubkey(this->pubKey);
 }
 
 bool TXInput::canUnlockOutputWith(std::string unlockingData) {
-    return scriptSig.compare(unlockingData) == 0;
+    return pubKey.compare(unlockingData) == 0;
+}
+
+bool TXInput::usesKey(std::string pubKeyHash) {
+    std::string lockingHash = hashPubKey(pubKey);
+
+    return lockingHash.compare(pubKeyHash) == 0;
 }
 
 void TXInput::printTXInput() {
     printf("TXInput txid: %s\n", getHex(txid).c_str());
     printf("TXInput vout: %d\n", vout);
-    printf("TXInput scriptSig: %s\n", scriptSig.c_str());
+    printf("TXInput pubKey: %s\n", pubKey.c_str());
 }
 
 std::string TXInputSerialize::serialize(TXInput* txin) {
@@ -59,28 +65,38 @@ TXInput TXInputSerialize::deserialize(std::string& serialTXInput) {
 /*
  * TXOuput
  */
-TXOutput::TXOutput(int value, std::string scriptPubKey) {
+TXOutput::TXOutput(int value, std::string pubKeyHash) {
     this->value        = value;
-    this->scriptPubKey = scriptPubKey;
+    this->pubKeyHash   = pubKeyHash;
 }
 
 TXOutput::TXOutput(CryptoProtobuf::TXOutput* d_txout) {
-    this->value = d_txout->value();
-    this->scriptPubKey = d_txout->scriptpubkey();
+    this->value      = d_txout->value();
+    this->pubKeyHash = d_txout->pubkeyhash();
 }
 
 void TXOutput::loadTXOutput(CryptoProtobuf::TXOutput* s_txout) {
     s_txout->set_value(this->value);
-    s_txout->set_scriptpubkey(this->scriptPubKey);
+    s_txout->set_pubkeyhash(this->pubKeyHash);
+}
+
+void TXOutput::lock(std::string address) {
+    std::string pubKeyHash = base58Decode(address);
+    pubKeyHash = pubKeyHash.substr(1, pubKeyHash.size()-4);
+    this->pubKeyHash = pubKeyHash;
+}
+
+bool TXOutput::isLockedWithKey(std::string pubKeyHash) {
+    return this->pubKeyHash.compare(pubKeyHash) == 0;
 }
 
 bool TXOutput::canBeUnlockedWith(std::string unlockingData) {
-    return scriptPubKey.compare(unlockingData) == 0;
+    return pubKeyHash.compare(unlockingData) == 0;
 }
 
 void TXOutput::printTXOutput() {
     printf("TXOutput value: %d\n", value);
-    printf("TXOutput scriptPubKey: %s\n", scriptPubKey.c_str());
+    printf("TXOutput pubKeyHash: %s\n", pubKeyHash.c_str());
 }
 
 std::string TXOutputSerialize::serialize(TXOutput* txout) {
@@ -128,6 +144,7 @@ Transaction::Transaction(std::string to, std::string data) {
     setID();
 }
 
+// Include to fully instantiate blockchain
 #include "blockchain.hpp"
 
 Transaction::Transaction(std::string from, std::string to, int amount, BlockChain* bc) {

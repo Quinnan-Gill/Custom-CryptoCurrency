@@ -19,10 +19,11 @@ message Transaction {
 message TXInput {
     required bytes txid      = 1;
     required int32 vout      = 2;
-    required bytes scriptSig = 3;
+    required bytes signature = 3;
+    required bytes pubKey    = 4;
 }
 
 message TXOutput {
     required int32 value        = 1;
-    required bytes scriptPubKey = 2;
+    required bytes pubKeyHash   = 2;
 }

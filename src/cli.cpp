@@ -15,7 +15,9 @@ void CLI::run(int argc, char *argv[]) {
     } else if(strcmp("createblockchain", argv[1]) == 0 && argc == 4) {
         std::string address;
         parseCreateBlockchain(argv, &address);
-        createBlockchain(address);
+        getBalance(address);
+    } else if(strcmp("createwallet", argv[1]) == 0) {
+        createWallet();
     } else if(strcmp("printchain", argv[1]) == 0) {
         printChain();
     } else if(strcmp("send", argv[1]) == 0 && argc == SEND_ARGC) {
@@ -30,8 +32,9 @@ void CLI::run(int argc, char *argv[]) {
 
 void CLI::usage(char *argv[]) {
     printf("Usage:\n");
-    printf("  getbalance -address ADDRESS - Get balance of ADDRESS\n");
     printf("  createblockchain -address ADDRESS - Create a blockchain and send genesis block reward to ADDRESS\n");
+    printf("  createwallet - Generates a new key-pair and saves it into the wallet file\n");
+    printf("  getbalance -address ADDRESS - Get balance of ADDRESS\n");
     printf("  printchain - Print all the blocks of the blockchain\n");
     printf("  send -from FROM -to TO -amount AMOUNT - Send AMOUNT of coins from FROM address to TO\n");
 }
@@ -51,6 +54,17 @@ void CLI::parseCreateBlockchain(char *argv[], std::string* address) {
 void CLI::createBlockchain(std::string address) {
     CreateBlockChain bc {address};
     printf("Done!\n");
+}
+
+/*
+ * Create Wallet
+ */
+void CLI::createWallet() {
+    Wallets wallets;
+    std::string address = wallets.createWallet();
+    wallets.saveToFile();
+
+    printf("Your new address: %s\n", address.c_str());
 }
 
 /*

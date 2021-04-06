@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package CryptoProtobuf;
+
+message Wallets {
+    // Wallet Key to Value (helps me avoid the )
+    message WalletMap {
+        required bytes address = 1; // address of the wallet
+        required Wallet wallet = 2;
+    }
+
+    repeated WalletMap map = 1; // A subsitute for map protobuf type
+}
+
+message Wallet {
+    required bytes privateKey = 1;
+    required bytes publicKey  = 2;
+}

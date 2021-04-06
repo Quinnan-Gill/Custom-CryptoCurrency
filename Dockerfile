@@ -31,4 +31,6 @@ RUN cd protobuf/ && \
     ./configure && make && \
     make install && ldconfig
 
+RUN apt-get install libssl-dev
+
 WORKDIR /home
